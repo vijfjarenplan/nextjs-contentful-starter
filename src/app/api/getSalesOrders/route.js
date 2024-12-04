@@ -1,18 +1,16 @@
-const fetch = require("node-fetch");
+import { NextResponse } from "next/server";
 
-exports.handler = async function (event) {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const soldToNumber = searchParams.get("soldToNumber");
+
   const baseUrl = process.env.S4HANA_API_URL;
   const endpoint = "API_SALES_ORDER_SRV/A_SalesOrder";
-
-  // Get the Sold-to number from query parameters
-  const { soldToNumber } = event.queryStringParameters || {};
   const queryParams = soldToNumber
     ? `?$filter=SoldToParty eq '${soldToNumber}'&$top=50&$inlinecount=allpages`
     : "?$top=50&$inlinecount=allpages";
 
   const url = `${baseUrl}${endpoint}${queryParams}`;
-  console.log("Request URL:", url); // Debugging
-
   const username = process.env.S4HANA_USERNAME;
   const password = process.env.S4HANA_PASSWORD;
   const auth = Buffer.from(`${username}:${password}`).toString("base64");
@@ -27,21 +25,12 @@ exports.handler = async function (event) {
     });
 
     if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({ error: response.statusText }),
-      };
+      return NextResponse.json({ error: response.statusText }, { status: response.status });
     }
 
     const data = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data),
-    };
+    return NextResponse.json(data);
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
-    };
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-};
+}

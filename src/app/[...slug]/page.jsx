@@ -9,27 +9,33 @@ const componentMap = {
 };
 
 export default async function ComposablePage({ params }) {
+  // Destructure and join the slug
   const { slug } = params;
-  
-  const pageSlug = slug.join('/');
+  const pageSlug = Array.isArray(slug) ? slug.join('/') : slug;
 
   try {
+    // Fetch the page data
     const page = await getPageFromSlug(`/${pageSlug}`);
 
     if (!page) {
       return notFound();
     }
 
+    // Render the page sections dynamically
     return (
       <div data-sb-object-id={page.id}>
         {(page.sections || []).map((section, idx) => {
           const Component = componentMap[section.type];
+          if (!Component) {
+            console.warn(`No component found for type "${section.type}"`);
+            return null;
+          }
           return <Component key={idx} {...section} />;
         })}
       </div>
     );
   } catch (error) {
-    console.error(error.message);
+    console.error('Error fetching page:', error.message);
     return notFound();
   }
 }
