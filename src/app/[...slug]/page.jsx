@@ -9,18 +9,22 @@ const componentMap = {
 };
 
 export default async function ComposablePage({ params }) {
-  const slug = await params?.slug;
+  // Await the params to resolve
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
+
+  // Handle slug as array or string
   const pageSlug = Array.isArray(slug) ? slug.join("/") : slug;
 
   try {
+    // Fetch the page data
     const page = await getPageFromSlug(`/${pageSlug}`);
 
     if (!page) {
-      // If the page is not found, call `notFound` to display a 404 page
-      console.warn(`Page not found for slug: ${pageSlug}`);
       return notFound();
     }
 
+    // Render the page sections dynamically
     return (
       <div data-sb-object-id={page.id}>
         {(page.sections || []).map((section, idx) => {
@@ -34,7 +38,7 @@ export default async function ComposablePage({ params }) {
       </div>
     );
   } catch (error) {
-    console.error(`Error fetching page: ${error.message}`);
+    console.error("Error fetching page:", error.message);
     return notFound();
   }
 }
