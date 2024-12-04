@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MEDIA_URL } from "../../../utils/commerce";
+import { MEDIA_URL } from "../../src/utils/commerce";
 
 export default function ProductDetailsPage({ params }) {
   const [productCode, setProductCode] = useState(null);
