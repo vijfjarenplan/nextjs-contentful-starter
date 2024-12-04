@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MEDIA_URL } from "../../utils/commerce"; // Ensure MEDIA_URL is imported
 
 export default function ProductsPage() {
   const [query, setQuery] = useState("");
@@ -16,10 +17,26 @@ export default function ProductsPage() {
     try {
       const response = await fetch(`/api/getProducts/search?query=${encodeURIComponent(query)}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error(`Failed to fetch products. Status: ${response.status}`);
       }
+
       const data = await response.json();
-      setProducts(data.products || []);
+
+      // Process products
+      const updatedProducts = data.products.map((product) => {
+        const fullImageUrl = product.firstVariantImage
+          ? (product.firstVariantImage.startsWith("/medias")
+              ? `${MEDIA_URL}${product.firstVariantImage}`
+              : product.firstVariantImage)
+          : "/media/placeholder.png";
+
+        return {
+          ...product,
+          images: [{ url: fullImageUrl }],
+        };
+      });
+
+      setProducts(updatedProducts);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -55,13 +72,17 @@ export default function ProductsPage() {
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setViewMode("card")}
-          className={`px-4 py-2 rounded-l ${viewMode === "card" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`px-4 py-2 rounded-l ${
+            viewMode === "card" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
         >
           Card View
         </button>
         <button
           onClick={() => setViewMode("list")}
-          className={`px-4 py-2 rounded-r ${viewMode === "list" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`px-4 py-2 rounded-r ${
+            viewMode === "list" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
         >
           List View
         </button>
@@ -80,11 +101,14 @@ export default function ProductsPage() {
               href={`/products/${product.code}`}
               className="border border-gray-300 rounded-lg shadow hover:shadow-lg transition-shadow"
             >
-              <img
-                src={product.images?.[0]?.url || "/placeholder.png"}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-t-lg"
-              />
+              <div className="w-full aspect-w-1 aspect-h-1 bg-gray-200">
+                <img
+                  src={product.images?.[0]?.url || "/media/placeholder.png"}
+                  alt={product.name || "Placeholder Image"}
+                  onError={(e) => (e.target.src = "/media/placeholder.png")} // Fallback for broken images
+                  className="w-full h-full object-contain rounded-t-lg"
+                />
+              </div>
               <div className="p-4">
                 <h2 className="text-lg font-semibold">{product.name}</h2>
                 <p className="text-gray-600">{product.price?.formattedValue}</p>
@@ -99,11 +123,14 @@ export default function ProductsPage() {
               key={product.code}
               className="flex items-center border border-gray-300 rounded-lg shadow hover:shadow-lg transition-shadow p-4"
             >
-              <img
-                src={product.images?.[0]?.url || "/placeholder.png"}
-                alt={product.name}
-                className="w-24 h-24 object-cover rounded-lg"
-              />
+              <div className="w-24 aspect-w-1 aspect-h-1 bg-gray-200">
+                <img
+                  src={product.images?.[0]?.url || "/media/placeholder.png"}
+                  alt={product.name || "Placeholder Image"}
+                  onError={(e) => (e.target.src = "/media/placeholder.png")} // Fallback for broken images
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              </div>
               <div className="ml-4 flex-1">
                 <h2 className="text-lg font-semibold">{product.name}</h2>
                 <p className="text-gray-600">{product.price?.formattedValue}</p>
